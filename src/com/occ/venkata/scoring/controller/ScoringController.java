@@ -1,20 +1,19 @@
 package com.occ.venkata.scoring.controller;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.occ.venkata.scoring.Scorable;
-import com.occ.venkata.scoring.ScoringInputSource;
-import com.occ.venkata.scoring.io.FileReader;
 import com.occ.venkata.scoring.io.InputSourceReader;
+import com.occ.venkata.scoring.mapper.Mappable;
 import com.occ.venkata.scoring.util.ScoringUtil;
 
 public class ScoringController {
 	
 	private Scorable scorer = null;
 	private InputSourceReader<String> inputSourceReader = null;
+	private Mappable mapper;
 		
 	private ScoringController() {
 	}
@@ -40,27 +39,25 @@ public class ScoringController {
 		return this;
 	}
 	
+	public ScoringController withMapper(final Mappable mapper) {
+		if(mapper == null) {
+			throw new RuntimeException("Mapper cannot be null.");
+		}
+		this.mapper = mapper;
+		return this;
+	}
+	
 	public final long score() {
 		Map<Object, List<String>> namesByFirstCharacter = inputSourceReader.read()
-																	.stream()
-																	.collect(Collectors.groupingBy(s -> s.substring(0, 1)));
-		final Map<String, Long> offsetsByCharacter = constructOffsetByCharacterMap(namesByFirstCharacter);
+																		.stream()
+																		.collect(Collectors.groupingBy(s -> s.substring(0, 1)));
+		
+		final Map<String, Long> offsetsByCharacter = mapper.map(namesByFirstCharacter);
+		
 		final long sum = namesByFirstCharacter.entrySet().stream()
-				.mapToLong(entry -> ScoringUtil.create().sum(entry.getValue(), scorer, offsetsByCharacter.get(entry.getKey().toString())))
-				.sum();
+														.mapToLong(entry -> ScoringUtil.create().sum(entry.getValue(), scorer, offsetsByCharacter.get(entry.getKey().toString())))
+														.sum();
 		return sum;
 		
 	}
-	
-	private Map<String, Long> constructOffsetByCharacterMap(final Map<Object, List<String>> namesByFirstCharacter) {
-		final Map<String, Long> offsetsByCharacter = new HashMap<>();
-		long offset = 0;
-		for(int i = 'A'; i <= 'Z'; i++) {
-			offsetsByCharacter.put(String.valueOf((char)i), offset);
-			offset += namesByFirstCharacter.get(String.valueOf((char)i)).size();
-			
-		}
-		return offsetsByCharacter;
-	}
-	
 }

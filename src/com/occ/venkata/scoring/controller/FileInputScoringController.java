@@ -4,6 +4,7 @@ import com.occ.venkata.scoring.LexicalScorer;
 import com.occ.venkata.scoring.Scorable;
 import com.occ.venkata.scoring.io.FileReader;
 import com.occ.venkata.scoring.io.InputSourceReader;
+import com.occ.venkata.scoring.mapper.CharacterToOffsetMapper;
 
 public class FileInputScoringController {
 	
@@ -27,6 +28,7 @@ public class FileInputScoringController {
 		long sum = ScoringController.create()
 						.withInputSourceReader(fileReader)
 						.withScorer(scorer)
+						.withMapper(CharacterToOffsetMapper.create())
 						.score();
 		return sum;
 	}
